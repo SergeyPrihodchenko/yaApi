@@ -8,6 +8,7 @@ use App\Http\Requests\UploadingFileListRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class BaseController extends Controller
@@ -105,11 +106,25 @@ class BaseController extends Controller
 
         $file = $validated['file'];
 
-        $fileName = str_replace(".", '_', $ip) . '.' . $file->getClientOriginalExtension();
+        $serverName = str_replace(".", '_', $ip);
+
+        $fileName = $file->getClientOriginalName();
 
         Storage::directoryExists('uploaded_logs') || Storage::makeDirectory('uploaded_logs');
 
-        Storage::putFileAs('uploaded_logs', $file, $fileName);
+        Storage::directoryExists('uploaded_logs/' . $serverName) || Storage::makeDirectory('uploaded_logs/' . $serverName);
+
+        $allFiles = Storage::allFiles('uploaded_logs/' . $serverName);
+
+        if(in_array('uploaded_logs/' . $serverName . '/' . $fileName, $allFiles)) {
+            return response()->json([
+                'message' => 'File exist'
+            ]);
+        }
+
+        Log::alert('Файл добавлен ' . $fileName);
+
+        Storage::putFileAs('uploaded_logs/'.$serverName, $file, $fileName);
 
         return response()->json([
             'message' => 'File uploaded successfully',

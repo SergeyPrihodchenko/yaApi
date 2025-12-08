@@ -28,7 +28,7 @@ class dev extends Command
     public function handle()
     {
         $base = new BaseController();
-        $base->downloadFile();
-
+        $allFile = Storage::allFiles('uploaded_logs/212_193_30_100');
+        dd($allFile);
     }
 }
