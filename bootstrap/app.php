@@ -16,6 +16,3 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withExceptions(function (Exceptions $exceptions): void {
     })->create();
-    app('Illuminate\Contracts\Http\Kernel')->withoutMiddleware([
-        \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class,
-    ]);
