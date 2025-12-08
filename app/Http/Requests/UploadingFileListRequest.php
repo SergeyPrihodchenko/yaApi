@@ -11,7 +11,7 @@ class UploadingFileListRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -23,7 +23,6 @@ class UploadingFileListRequest extends FormRequest
     {
         return [
             'file_list' => 'required|array',
-            'file_list.*' => 'string',
         ];
     }
 }
