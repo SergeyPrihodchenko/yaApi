@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\UploadFileRequest;
 use App\Http\Requests\UploadingFileListRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
@@ -92,6 +93,30 @@ class BaseController extends Controller
         }
     }
 
+    public function uploadFileInLical(UploadFileRequest $request)
+    {
+        $ip = $request->ip();
+
+        if (config('ipList.allowed_ips') && !in_array($ip, config('ipList.allowed_ips'))) {
+            return response()->json(['message' => 'Unauthorized IP address'], 403);
+        }
+
+        $validated = $request->validated();
+
+        $file = $validated['file'];
+
+        $fileName = str_replace(".", '_', $ip) . '.' . $file->getClientOriginalExtension();
+
+        Storage::directoryExists('uploaded_logs') || Storage::makeDirectory('uploaded_logs');
+
+        Storage::putFileAs('uploaded_logs', $file, $fileName);
+
+        return response()->json([
+            'message' => 'File uploaded successfully',
+            'file_name' => $fileName,
+        ]);
+    }
+
     private function uploadFile()
     {
         $localFilePath = storage_path('app/public/sample.log'); // Локальный путь к файлу
@@ -129,11 +154,7 @@ class BaseController extends Controller
     {
         $ip = $request->ip();
 
-        // if (config('ipList.allowed_ips') && !in_array($ip, config('ipList.allowed_ips'))) {
-        //     return response()->json(['message' => 'Unauthorized IP address'], 403);
-        // }
-
-        if('212.193.30.100' !== $ip) {
+        if (config('ipList.allowed_ips') && !in_array($ip, config('ipList.allowed_ips'))) {
             return response()->json(['message' => 'Unauthorized IP address'], 403);
         }
 
@@ -141,12 +162,15 @@ class BaseController extends Controller
 
         $fileList = $validated['file_list'];
 
-        Storage::put('file_list.txt', implode(PHP_EOL, $fileList));
+        $fileName = str_replace(".", '_', $ip);
+
+        Storage::directoryExists('file_lists') || Storage::makeDirectory('file_lists');
+
+        Storage::put('file_lists/' . $fileName . '.txt', implode(PHP_EOL, $fileList));
 
         return response()->json([
             'message' => 'File list received successfully',
             'file_list' => $validated['file_list'],
         ]);
     }
-
 }

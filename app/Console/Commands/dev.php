@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Http\Controllers\api\BaseController;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Storage;
 
 class dev extends Command
 {
@@ -27,6 +28,7 @@ class dev extends Command
     public function handle()
     {
         $base = new BaseController();
-        $base->uploadFile('/test/test1');
+        $base->downloadFile();
+
     }
 }
