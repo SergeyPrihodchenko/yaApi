@@ -1,0 +1,126 @@
+<?php
+
+namespace App\Http\Controllers\api;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Http;
+
+class BaseController extends Controller
+{
+    const YA_URL = 'https://cloud-api.yandex.net/v1/disk/resources';
+    protected $apiKey;
+
+    public function __construct()
+    {
+        $this->apiKey = 'OAuth ' . env('YADISK_API_KEY');
+    }
+
+    public function getAllList()
+    {
+        $files = [];
+        $page = 0;
+        $limit = 1000; // Максимальное количество записей на одну страницу
+
+        do {
+            $params = [
+                'path' => 'Логи сайтов',
+                'limit' => $limit,
+                'offset' => $page * $limit,
+            ];
+
+            $response = Http::withHeaders([
+                'Authorization' => $this->apiKey,
+            ])
+            ->acceptJson() // Устанавливаем заголовок Accept: application/json
+            ->get(self::YA_URL, $params);
+
+            if ($response->successful()) {
+                $data = $response->json(); // Преобразуем ответ в массив
+                $files = array_merge($files, $data['_embedded']['items']); // Объединяем полученные элементы
+                $page++;
+            } else {
+                break; // Ошибка при запросе
+            }
+        } while (!empty($data['_embedded']['items']));
+        $result = response()->json($files);
+
+        return $result; // Возвращаем полный список файлов
+    }
+
+
+
+    private function dirExists($dirPath)
+    {
+        $params = [
+            'path' => $dirPath,
+        ];
+
+        $response = Http::withHeaders([
+            'Authorization' => $this->apiKey,
+        ])->get(self::YA_URL, $params);
+
+        if($response->status() == 200) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private function createDir($dirPath)
+    {
+        $params = [
+            'path' => $dirPath,
+        ];
+
+        $response = Http::withHeaders([
+            'Authorization' => $this->apiKey,
+        ])->send('PUT', self::YA_URL, [
+            'query' => $params,
+            'body'  => '', // explicitly no payload
+        ]);
+        
+        if($response->status() == 201) {
+            return true;
+        } elseif($response->status() == 409) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private function uploadFile()
+    {
+        $localFilePath = storage_path('app/public/sample.log'); // Локальный путь к файлу
+
+        // Получаем URL для загрузки файла
+        $params = [
+            'path' => 'test/sample.log',
+            'overwrite' => 'true',
+        ];
+
+        $response = Http::withHeaders([
+            'Authorization' => $this->apiKey,
+        ])->get(self::YA_URL . '/upload', $params);
+
+        if ($response->successful()) {
+            $uploadUrl = $response->json()['href'];
+
+            // Загружаем файл на полученный URL
+            $fileContents = File::get($localFilePath);
+            // $uploadResponse = Http::put($uploadUrl, $fileContents);
+            // Запрос с отключенной проверкой SSL-сертификата
+            $uploadResponse = Http::withoutVerifying()->put($uploadUrl, $fileContents);
+
+            if ($uploadResponse->successful()) {
+                return response()->json(['message' => 'File uploaded successfully']);
+            } else {
+                return response()->json(['message' => 'File upload failed'], 500);
+            }
+        } else {
+            return response()->json(['message' => 'Failed to get upload URL'], 500);
+        }
+    }
+
+}
