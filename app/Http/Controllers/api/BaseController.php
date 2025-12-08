@@ -7,6 +7,7 @@ use App\Http\Requests\UploadingFileListRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 
 class BaseController extends Controller
 {
