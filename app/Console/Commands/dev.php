@@ -27,7 +27,7 @@ class dev extends Command
      */
     public function handle()
     {
-        
-
+        $baseController = new BaseController();
+        $baseController->uploadFile();
     }
 }

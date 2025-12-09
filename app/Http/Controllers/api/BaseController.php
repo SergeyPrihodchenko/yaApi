@@ -5,8 +5,6 @@ namespace App\Http\Controllers\api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\UploadFileRequest;
 use App\Http\Requests\UploadingFileListRequest;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -108,17 +106,14 @@ class BaseController extends Controller
 
         $fileName = $file->getClientOriginalName();
 
-        $parts = explode('-', $fileName);
-
-        $domainParts = array_slice($parts, 3, -1); 
-        $domain = implode('-', $domainParts);
+        $domain = $this->getDomainInFileName($fileName);
 
         $uploadedLogs = 'uploaded_logs';
 
         Storage::directoryExists($uploadedLogs) || Storage::makeDirectory($uploadedLogs);
 
         Storage::directoryExists($uploadedLogs . '/' . $domain) || Storage::makeDirectory($uploadedLogs . '/' . $domain);
-        
+
         $allFiles = Storage::allFiles($uploadedLogs . '/' . $domain);
 
         if(in_array($uploadedLogs . '/' . $domain . '/' . $fileName, $allFiles)) {
@@ -137,13 +132,33 @@ class BaseController extends Controller
         ]);
     }
 
-    private function uploadFile()
+    public function uploadFile()
     {
-        $localFilePath = storage_path('app/public/sample.log'); // Локальный путь к файлу
+        $uploadedLogs = 'uploaded_logs';
+
+        $allDirsByDomains = Storage::directories($uploadedLogs);
+
+        foreach ($allDirsByDomains as $dir) {
+
+            $allFiles = Storage::allFiles($dir);
+
+            if (!$this->dirExists($dir)) {
+                $this->createDir($dir);
+            }
+
+            foreach ($allFiles as $filePath) {
+                $this->uploadFileToYandexDisk($dir, Storage::path($filePath));
+            }
+        }
+
+    }
+
+    public function uploadFileToYandexDisk($dir, $localFilePath)
+    {
 
         // Получаем URL для загрузки файла
         $params = [
-            'path' => 'test/sample.log',
+            'path' => 'test' . '/' . $dir . '/' . basename($localFilePath),
             'overwrite' => 'true',
         ];
 
@@ -155,7 +170,7 @@ class BaseController extends Controller
             $uploadUrl = $response->json()['href'];
 
             // Загружаем файл на полученный URL
-            $fileContents = File::get($localFilePath);
+            $fileContents = Storage::get($localFilePath);
             // $uploadResponse = Http::put($uploadUrl, $fileContents);
             // Запрос с отключенной проверкой SSL-сертификата
             $uploadResponse = Http::withoutVerifying()->put($uploadUrl, $fileContents);
@@ -192,5 +207,14 @@ class BaseController extends Controller
             'message' => 'File list received successfully',
             'file_list' => $validated['file_list'],
         ]);
+    }
+
+    public function getDomainInFileName(string $fileName): string
+    {
+        $parts = explode('-', $fileName);
+
+        $domainParts = array_slice($parts, 3, -1); 
+        $domain = implode('-', $domainParts);
+        return $domain;
     }
 }
