@@ -113,12 +113,15 @@ class BaseController extends Controller
         $domainParts = array_slice($parts, 3, -1); 
         $domain = implode('-', $domainParts);
 
-        Storage::directoryExists('uploaded_logs') || Storage::makeDirectory('uploaded_logs');
+        $uploadedLogs = 'uploaded_logs';
 
-        Storage::directoryExists('uploaded_logs/' . $domain) || Storage::makeDirectory('uploaded_logs/' . $domain);
-        $allFiles = Storage::allFiles('uploaded_logs/' . $domain);
+        Storage::directoryExists($uploadedLogs) || Storage::makeDirectory($uploadedLogs);
 
-        if(in_array('uploaded_logs/' . $domain . '/' . $fileName, $allFiles)) {
+        Storage::directoryExists($uploadedLogs . '/' . $domain) || Storage::makeDirectory($uploadedLogs . '/' . $domain);
+        
+        $allFiles = Storage::allFiles($uploadedLogs . '/' . $domain);
+
+        if(in_array($uploadedLogs . '/' . $domain . '/' . $fileName, $allFiles)) {
             return response()->json([
                 'message' => 'File exist'
             ]);
