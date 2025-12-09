@@ -149,13 +149,13 @@ class BaseController extends Controller
             }
 
             foreach ($allFiles as $filePath) {
-                $this->uploadFileToYandexDisk($dir, Storage::path($filePath));
+                $this->uploadFileToYandexDisk($dirByDomain, Storage::path($filePath));
             }
         }
 
     }
 
-    public function uploadFileToYandexDisk($dir, $localFilePath)
+    public function uploadFileToYandexDisk(string $dir, string $localFilePath)
     {
 
         // Получаем URL для загрузки файла
