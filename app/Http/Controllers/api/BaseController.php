@@ -108,6 +108,19 @@ class BaseController extends Controller
 
         $domain = $this->getDomainInFileName($fileName);
 
+        $projects = [];
+
+        $peleton = config('projectGroup.project_groups.peleton');
+        $rndKrd = config('projectGroup.project_groups.krd_rnd');
+
+        $projects = array_merge($peleton, $rndKrd);
+
+        if(!in_array($domain, $projects)) {
+            return response()->json([
+                'message' => 'Сайта '.$domain.' нет в проектах',
+            ]);
+        }
+
         $uploadedLogs = 'uploaded_logs';
 
         Storage::directoryExists($uploadedLogs) || Storage::makeDirectory($uploadedLogs);
