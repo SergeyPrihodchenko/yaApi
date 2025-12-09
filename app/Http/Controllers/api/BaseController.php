@@ -73,7 +73,7 @@ class BaseController extends Controller
     private function createDir($dirPath)
     {
         $params = [
-            'path' => $dirPath,
+            'path' =>  '/test' . '/' . $dirPath,
         ];
 
         $response = Http::withHeaders([
@@ -141,9 +141,11 @@ class BaseController extends Controller
         foreach ($allDirsByDomains as $dir) {
 
             $allFiles = Storage::allFiles($dir);
+            
+            $dirByDomain = explode('/', $dir)[1];
 
-            if (!$this->dirExists($dir)) {
-                $this->createDir($dir);
+            if (!$this->dirExists($dirByDomain)) {
+                $this->createDir($dirByDomain);
             }
 
             foreach ($allFiles as $filePath) {
