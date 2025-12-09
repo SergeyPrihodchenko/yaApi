@@ -56,7 +56,7 @@ class BaseController extends Controller
     private function dirExists($dirPath)
     {
         $params = [
-            'path' => $dirPath,
+            'path' => 'заявки' . $dirPath,
         ];
 
         $response = Http::withHeaders([
@@ -73,7 +73,7 @@ class BaseController extends Controller
     private function createDir($dirPath)
     {
         $params = [
-            'path' =>  '/test' . '/' . $dirPath,
+            'path' =>  '/заявки' . '/' . $dirPath,
         ];
 
         $response = Http::withHeaders([
@@ -160,7 +160,7 @@ class BaseController extends Controller
 
         // Получаем URL для загрузки файла
         $params = [
-            'path' => 'test' . '/' . $dir . '/' . basename($localFilePath),
+            'path' => 'заявки' . '/' . $dir . '/' . basename($localFilePath),
             'overwrite' => 'true',
         ];
 
