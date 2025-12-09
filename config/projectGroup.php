@@ -25,7 +25,7 @@ return [
             'kaiyi.peleton-yug.ru',
             'peleton-solaris.ru',
         ],
-        'krd_rnd' => [
+        'rnd' => [
             'avrora-rnd.ru',
             'avto-dealer-rnd.ru',
             'avrora-cars.ru',
@@ -50,6 +50,34 @@ return [
             'skoda-krd.ru',
             'lada-dealer-krd.ru',
             'renault-dealer-krd.ru',
-        ]
+        ],
+        'krd' => [
+            'avrora-krd.ru',
+            'avr-auto.ru',
+            'avrora-autosalon.ru',
+            'kia-krd.ru',
+            'hyundai-dealer-krd.ru',
+            'geely-dealer-krd.ru',
+            'chery-dealer-krd.ru',
+            'haval-official-krd.ru',
+            'volkswagen-krd.ru',
+            'skoda-krd.ru',
+            'lada-dealer-krd.ru',
+            'renault-dealer-krd.ru',
+        ],
+        'sim' => [
+            'avrora-auto-sim.ru',
+            'avrora-sim.ru',
+            'avr-sim.ru',
+            'kia-auto-sim.ru',
+            'hyundai-auto-sim.ru',
+            'geely-auto-sim.ru',
+            'chery-auto-sim.ru',
+            'haval-auto-sim.ru',
+            'volkswagen-auto-sim.ru',
+            'skoda-dealer-sim.ru',
+            'lada-auto-sim.ru',
+            'renault-dealer-sim.ru',
+        ],
     ]
 ];

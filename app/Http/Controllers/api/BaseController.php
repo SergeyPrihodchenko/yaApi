@@ -5,6 +5,7 @@ namespace App\Http\Controllers\api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\UploadFileRequest;
 use App\Http\Requests\UploadingFileListRequest;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -53,10 +54,10 @@ class BaseController extends Controller
 
 
 
-    private function dirExists($dirPath)
+    private function dirExists(string $path)
     {
         $params = [
-            'path' => 'заявки' . $dirPath,
+            'path' => $path,
         ];
 
         $response = Http::withHeaders([
@@ -70,10 +71,10 @@ class BaseController extends Controller
         }
     }
 
-    private function createDir($dirPath)
+    private function createDir($path)
     {
         $params = [
-            'path' =>  '/заявки' . '/' . $dirPath,
+            'path' =>  $path,
         ];
 
         $response = Http::withHeaders([
@@ -84,8 +85,11 @@ class BaseController extends Controller
         ]);
         
         if($response->status() == 201) {
+            Log::info('Директория '. $path .' создана на Ya.Disk');
             return true;
         } elseif($response->status() == 409) {
+            Log::info('Директория '. $path .' не создана на Ya.Disk');
+            Log::warning($response->body());
             return true;
         } else {
             return false;
@@ -150,30 +154,46 @@ class BaseController extends Controller
         $uploadedLogs = 'uploaded_logs';
 
         $allDirsByDomains = Storage::directories($uploadedLogs);
-
+        
         foreach ($allDirsByDomains as $dir) {
 
             $allFiles = Storage::allFiles($dir);
             
-            $dirByDomain = explode('/', $dir)[1];
+            $dirName = explode('/', $dir)[1];
 
-            if (!$this->dirExists($dirByDomain)) {
-                $this->createDir($dirByDomain);
+            $locations = config('projectGroup.project_groups');
+            $currentLocation = '';
+
+            foreach ($locations as $location => $domains) {
+                if(in_array($dirName, $domains)) {
+                    $currentLocation = $location;
+                    if (!$this->dirExists('/заявки' . '/' . $currentLocation)) {
+                        $this->createDir('/заявки'. '/' . $currentLocation);
+                    }
+                }
+            }
+
+            if($currentLocation == '') {
+                Log::alert('Нет локации для ' . $dirName);
+                continue;
+            }
+
+            if (!$this->dirExists('/заявки' . '/' . $currentLocation . '/' . $dirName)) {
+                $this->createDir('/заявки' . '/' . $currentLocation . '/' . $dirName);
             }
 
             foreach ($allFiles as $filePath) {
-                $this->uploadFileToYandexDisk($dirByDomain, Storage::path($filePath));
+                $this->uploadFileToYandexDisk('/заявки' . '/' . $currentLocation . '/' . $dirName, Storage::path($filePath));
             }
         }
 
     }
 
-    public function uploadFileToYandexDisk(string $dir, string $localFilePath)
+    public function uploadFileToYandexDisk(string $path, string $localFilePath)
     {
-
         // Получаем URL для загрузки файла
         $params = [
-            'path' => 'заявки' . '/' . $dir . '/' . basename($localFilePath),
+            'path' => $path . '/' . basename($localFilePath),
             'overwrite' => 'true',
         ];
 
@@ -185,17 +205,27 @@ class BaseController extends Controller
             $uploadUrl = $response->json()['href'];
 
             // Загружаем файл на полученный URL
-            $fileContents = Storage::get($localFilePath);
+            $fileContents = File::get($localFilePath);
             // $uploadResponse = Http::put($uploadUrl, $fileContents);
             // Запрос с отключенной проверкой SSL-сертификата
             $uploadResponse = Http::withoutVerifying()->put($uploadUrl, $fileContents);
 
+            // задержка что бы отправка не падала за превышение количества запрсов
+            sleep(3);
+
             if ($uploadResponse->successful()) {
+                Log::info('Файл '.$localFilePath.' обновлен или загружен на Ya.Disk');
+                Storage::directoryExists('downloaded') || Storage::makeDirectory('downloaded');
+                File::move($localFilePath, Storage::path('downloaded/' . basename($localFilePath)));
                 return response()->json(['message' => 'File uploaded successfully']);
             } else {
+                Log::info('Загрузка не удалась ' . $localFilePath);
+                Log::warning($response->body());
                 return response()->json(['message' => 'File upload failed'], 500);
             }
         } else {
+            Log::info('Загрузка не удалась ' . $localFilePath);
+            Log::warning($response->body());
             return response()->json(['message' => 'Failed to get upload URL'], 500);
         }
     }

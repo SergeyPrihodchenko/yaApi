@@ -27,10 +27,6 @@ class dev extends Command
      */
     public function handle()
     {
-        $peleton = config('projectGroup.project_groups.peleton');
-        $rndKrd = config('projectGroup.project_groups.krd_rnd');
-        dd(in_array('volkswagen-rnd.ru', $rndKrd));
-
         $baseController = new BaseController();
         $baseController->uploadFile();
     }
