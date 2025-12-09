@@ -106,17 +106,19 @@ class BaseController extends Controller
 
         $file = $validated['file'];
 
-        $serverName = str_replace(".", '_', $ip);
-
         $fileName = $file->getClientOriginalName();
+
+        $parts = explode('-', $fileName);
+
+        $domainParts = array_slice($parts, 3, -1); 
+        $domain = implode('-', $domainParts);
 
         Storage::directoryExists('uploaded_logs') || Storage::makeDirectory('uploaded_logs');
 
-        Storage::directoryExists('uploaded_logs/' . $serverName) || Storage::makeDirectory('uploaded_logs/' . $serverName);
+        Storage::directoryExists('uploaded_logs/' . $domain) || Storage::makeDirectory('uploaded_logs/' . $domain);
+        $allFiles = Storage::allFiles('uploaded_logs/' . $domain);
 
-        $allFiles = Storage::allFiles('uploaded_logs/' . $serverName);
-
-        if(in_array('uploaded_logs/' . $serverName . '/' . $fileName, $allFiles)) {
+        if(in_array('uploaded_logs/' . $domain . '/' . $fileName, $allFiles)) {
             return response()->json([
                 'message' => 'File exist'
             ]);
@@ -124,7 +126,7 @@ class BaseController extends Controller
 
         Log::alert('Файл добавлен ' . $fileName);
 
-        Storage::putFileAs('uploaded_logs/'.$serverName, $file, $fileName);
+        Storage::putFileAs('uploaded_logs/'.$domain, $file, $fileName);
 
         return response()->json([
             'message' => 'File uploaded successfully',
