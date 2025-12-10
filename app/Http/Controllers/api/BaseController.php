@@ -114,10 +114,9 @@ class BaseController extends Controller
 
         $projects = [];
 
-        $peleton = config('projectGroup.project_groups.peleton');
-        $rndKrd = config('projectGroup.project_groups.krd_rnd');
-
-        $projects = array_merge($peleton, $rndKrd);
+        foreach (config('projectGroup.project_groups') as $key => $domains) {
+            $projects = array_merge($projects, $domains);
+        }
 
         if(!in_array($domain, $projects)) {
             return response()->json([
@@ -208,7 +207,9 @@ class BaseController extends Controller
             $fileContents = File::get($localFilePath);
             // $uploadResponse = Http::put($uploadUrl, $fileContents);
             // Запрос с отключенной проверкой SSL-сертификата
-            $uploadResponse = Http::withoutVerifying()->put($uploadUrl, $fileContents);
+            $uploadResponse = Http::withoutVerifying()
+            ->withBody($fileContents, 'application/octet-stream')
+            ->put($uploadUrl);
 
             // задержка что бы отправка не падала за превышение количества запрсов
             sleep(3);
