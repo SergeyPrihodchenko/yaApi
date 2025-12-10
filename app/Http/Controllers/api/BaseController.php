@@ -212,7 +212,7 @@ class BaseController extends Controller
             ->put($uploadUrl);
 
             // задержка что бы отправка не падала за превышение количества запрсов
-            sleep(3);
+            sleep(1.5);
 
             if ($uploadResponse->successful()) {
                 Log::info('Файл '.$localFilePath.' обновлен или загружен на Ya.Disk');
